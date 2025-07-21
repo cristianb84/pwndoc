@@ -285,16 +285,35 @@ defaultFilters.sort = function(input, key = null) {
 
 // Sort array by supplied field: {#findings | sortArrayByField: 'identifier':1}{/}
 // order: 1 = ascending, -1 = descending
-defaultFilters.sortArrayByField = function (input, field, order) {
-    //invalid order sort ascending
-    if(order != 1 && order != -1) order = 1;
+//defaultFilters.sortArrayByField = function (input, field, order) {
+//    //invalid order sort ascending
+//    if(order != 1 && order != -1) order = 1;
 
-    const sorted = input.sort((a,b) => {
-        //multiply by order so that if is descending (-1) will reverse the values
-        return _.get(a, field).localeCompare(_.get(b, field), undefined, {numeric: true}) * order
-    })
-    return sorted;
-}
+//    const sorted = input.sort((a,b) => {
+//        //multiply by order so that if is descending (-1) will reverse the values
+//        return _.get(a, field).localeCompare(_.get(b, field), undefined, {numeric: true}) * order
+//    })
+//    return sorted;
+//}
+
+defaultFilters.sortArrayByField = function (input, field, order) {
+    if (order !== 1 && order !== -1) order = 1;
+
+    return input.sort((a, b) => {
+        const valA = _.get(a, field);
+        const valB = _.get(b, field);
+
+        if (typeof valA === 'number' && typeof valB === 'number') {
+            return (valA - valB) * order;
+        }
+
+        if (typeof valA === 'string' && typeof valB === 'string') {
+            return valA.localeCompare(valB, undefined, { numeric: true }) * order;
+        }
+
+        return 0;
+    });
+};
 
 // Capitalizes input first letter of each word, can be associated to 'lower' to normalize case: {creator.lastname | lower | title}
 subTemplatingFilters.title= function(input) {
