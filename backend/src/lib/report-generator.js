@@ -24,7 +24,7 @@ var assign = require("lodash/assign"); // added
 var last = require("lodash/last"); // added
 //
 
-console.log("[DEBUG] report-generator.js loaded");
+//console.log("[DEBUG] report-generator.js loaded");
 
 // Generate document with docxtemplater
 async function generateDoc(audit) {
@@ -725,7 +725,7 @@ let iii = 1;
 for (finding of result.findings){
         if (finding.category != "Past_Vulns"){
                 finding['no'] = iii++;
-                console.log(finding);
+//                console.log(finding);
         }else{
         finding['no'] ="";
         } 
@@ -773,14 +773,14 @@ for (finding of result.findings){
     replaceSubTemplating(result)
 
 //Code Added
-console.log(JSON.stringify(result));
+//console.log(JSON.stringify(result));
 const fs = require('fs');
 const path = require ('path');
 const outputData = JSON.stringify(result);
 const outputDir = path.join(__dirname, 'output');
 const testId = result.testid;
 const outputName = testId+'.json';
-console.log(outputData);
+//console.log(outputData);
 if (!fs.existsSync(outputDir)) {
   fs.mkdirSync(outputDir);
 } else {
@@ -876,7 +876,7 @@ function prepTools (text) {
                 var desc = tooltmp[1]
                 result.push({name: name, desc: desc})
         }
-      console.log(result);
+//      console.log(result);
         return result
 }
 //
