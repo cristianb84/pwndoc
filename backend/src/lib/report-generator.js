@@ -24,6 +24,8 @@ var assign = require("lodash/assign"); // added
 var last = require("lodash/last"); // added
 //
 
+console.log("[DEBUG] report-generator.js loaded");
+
 // Generate document with docxtemplater
 async function generateDoc(audit) {
     var templatePath = `${__basedir}/../report-templates/${audit.template.name}.${audit.template.ext || 'docx'}`
