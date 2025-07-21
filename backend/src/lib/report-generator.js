@@ -778,7 +778,7 @@ const outputData = JSON.stringify(result);
 const outputDir = path.join(__dirname, 'output');
 const testId = result.testid;
 const outputName = testId+'.json';
-//console.log(outputData);
+console.log(outputData);
 if (!fs.existsSync(outputDir)) {
   fs.mkdirSync(outputDir);
 } else {
