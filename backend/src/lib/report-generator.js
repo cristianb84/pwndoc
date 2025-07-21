@@ -723,7 +723,7 @@ let iii = 1;
 for (finding of result.findings){
         if (finding.category != "Past_Vulns"){
                 finding['no'] = iii++;
-                //console.log(finding);
+                console.log(finding);
         }else{
         finding['no'] ="";
         } 
@@ -771,7 +771,7 @@ for (finding of result.findings){
     replaceSubTemplating(result)
 
 //Code Added
-//console.log(JSON.stringify(result));
+console.log(JSON.stringify(result));
 const fs = require('fs');
 const path = require ('path');
 const outputData = JSON.stringify(result);
@@ -874,7 +874,7 @@ function prepTools (text) {
                 var desc = tooltmp[1]
                 result.push({name: name, desc: desc})
         }
-//      console.log(result);
+      console.log(result);
         return result
 }
 //
