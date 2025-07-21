@@ -19,6 +19,10 @@ var Settings = require('mongoose').model('Settings');
 const cvss = require('ae-cvss-calculator');
 var translate = require('../translate')
 var $t
+//Code Added
+var assign = require("lodash/assign"); // added
+var last = require("lodash/last"); // added
+//
 
 // Generate document with docxtemplater
 async function generateDoc(audit) {
@@ -62,11 +66,29 @@ async function generateDoc(audit) {
                     width = 400;
                 }
             }
-            else if (sizeObj.width > 600) {
-                var divider = sizeObj.width / 600;
-                width = 600;
-                height = Math.floor(sizeObj.height / divider);
-            }
+//            else if (sizeObj.width > 600) {
+//                var divider = sizeObj.width / 600;
+//                width = 600;
+//                height = Math.floor(sizeObj.height / divider);
+//            }
+	    else if (tagName === "image") {
+		var maxWidth = 720;
+		var maxHeight = 555;
+		var widthRatio = width / maxWidth;
+		var heightRatio = height / maxHeight;
+		if (widthRatio < 1 && heightRatio < 1) {
+			return [width,height];
+		}
+		let finalWidth, finalHeight;
+		if (widthRatio > heightRatio) {
+			finalWidth = maxWidth;
+			finalHeight = sizeObj.height / widthRatio;
+		} else {
+			finalHeight = maxHeight;
+			finalWidth = sizeObj.width / heightRatio;
+		}
+		return [Math.round(finalWidth), Math.round(finalHeight)];
+	    }
             return [width,height];
         }
         return [0,0];
@@ -532,6 +554,14 @@ async function prepAuditData(data, settings) {
         }
     }
 
+//Code Added - to support Limited Scope field
+    if (result.out_scope && result.out_scope.length > 0){
+        const myArray = {} 
+        myArray["targets"] = prepTools(result["out_scope"][0].text)
+        result.out_scope = myArray
+    }
+//
+
     result.company = {}
     if (data.company) {
         result.company.name = data.company.name || "undefined"
@@ -685,7 +715,20 @@ async function prepAuditData(data, settings) {
         }
         result.findings.push(tmpFinding)
     }
-
+//Code Added
+result.findings.sort(function(a, b){
+return b.cvss.baseMetricScore - a.cvss.baseMetricScore;
+});
+let iii = 1;
+for (finding of result.findings){
+        if (finding.category != "Past_Vulns"){
+                finding['no'] = iii++;
+                //console.log(finding);
+        }else{
+        finding['no'] ="";
+        } 
+}
+//
     result.categories = _
         .chain(result.findings)
         .groupBy("category")
@@ -712,15 +755,45 @@ async function prepAuditData(data, settings) {
             for (field of section.customFields) {
                 var fieldType = field.customField.fieldType
                 var label = field.customField.label
+//Code Modified to support "Tools Used"
                 if (fieldType === 'text')
+                        if (field.customField.displaySub === "Tools Used")
+                        formatSection["tools"] = prepTools(field.text)
+                        else 
                     formatSection[_.deburr(label.toLowerCase()).replace(/\s/g, '').replace(/[^\w]/g, '_')] = await splitHTMLParagraphs(field.text)
                 else if (fieldType !== 'space')
                     formatSection[_.deburr(label.toLowerCase()).replace(/\s/g, '').replace(/[^\w]/g, '_')] = field.text
             }
+//
         }
         result[section.field] = formatSection
     }
     replaceSubTemplating(result)
+
+//Code Added
+//console.log(JSON.stringify(result));
+const fs = require('fs');
+const path = require ('path');
+const outputData = JSON.stringify(result);
+const outputDir = path.join(__dirname, 'output');
+const testId = result.testid;
+const outputName = testId+'.json';
+//console.log(outputData);
+if (!fs.existsSync(outputDir)) {
+  fs.mkdirSync(outputDir);
+} else {
+  // If the output folder exists, remove any existing output files
+  const outputFiles = fs.readdirSync(outputDir).filter(file => file.startsWith('output') && file.endsWith('.json'));
+  outputFiles.forEach(file => fs.unlinkSync(path.join(outputDir, file)));
+}
+
+// Write the result to a file
+const outputPath = path.join(outputDir, outputName);
+fs.writeFileSync(outputPath, JSON.stringify(result));
+console.log(`Result saved to ${outputPath}`);
+console.log('To copy the file from the container, execute : sudo docker cp pwndoc-ng-backend:'+outputPath+' .');
+//
+
     return result
 }
 
@@ -787,3 +860,21 @@ function replaceSubTemplating(o, originalData = o) {
         });
     }
 }
+//Code Added
+function prepTools (text) {
+        var result = []
+        if (!text)
+                return result
+        var splitted = text.split("</p><p>")
+        for (value of splitted){
+                var valuetmp = value.replace("<p>","")
+                valuetmp = valuetmp.replace("</p>","")
+                var tooltmp = valuetmp.split(" | ")
+                var name = tooltmp[0]
+                var desc = tooltmp[1]
+                result.push({name: name, desc: desc})
+        }
+//      console.log(result);
+        return result
+}
+//

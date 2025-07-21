@@ -56,7 +56,8 @@
                     :key="col.name"
                     style="width:17%"
                     >
-                        <div v-if="['name', 'users', 'date'].indexOf(col.name) > -1">
+                        <!-- <div v-if="['name', 'users', 'date'].indexOf(col.name) > -1"> -->
+                        <div v-if="['testid', 'name', 'users', 'date'].indexOf(col.name) > -1">
                             <q-input 
                             dense
                             :label="$t('search')"

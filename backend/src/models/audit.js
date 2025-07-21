@@ -115,16 +115,45 @@ AuditSchema.statics.getAudits = (isAdmin, userId, filters) => {
         query.populate('reviewers', 'username firstname lastname')
         query.populate('approvals', 'username firstname lastname')
         query.populate('company', 'name')
-        query.select('id name auditType language creator collaborators company createdAt state type parentId')
-        query.exec()
-        .then((rows) => {
-            resolve(rows)
-        })
-        .catch((err) => {
-            reject(err)
-        })
-    })
-}
+//        query.select('id name auditType language creator collaborators company createdAt state type parentId')
+//        query.exec()
+//        .then((rows) => {
+//            resolve(rows)
+//        })
+//        .catch((err) => {
+//            reject(err)
+//        })
+//    })
+//}
+        query.populate({ path: 'customFields.customField', select: 'label text' })
+        query.select('id name language creator collaborators company createdAt state customFields')
+        query.exec().then((rows) => {
+            const modifiedRows = rows.map(row => {
+                // Filter and extract "Test ID" from customFields
+                let testIDText = 'Not Provided';  // Default if not found
+                row.customFields.forEach(cf => {
+                    if (cf.customField && cf.customField.label === "Test ID") {
+                        testIDText = cf.text;
+                    }
+                });
+
+                // Attach testIDText directly to the row object
+                row = row.toObject(); // Convert Mongoose document to plain JavaScript object
+                row.testid = testIDText; 
+                
+                // Clean up row to remove customFields if no longer needed
+                delete row.customFields;
+
+                return row;
+            });
+            resolve(modifiedRows);
+        }).catch((err) => {
+            reject(err);
+        });
+    });
+};
+
+
 
 // Get Audit with ID to generate report
 AuditSchema.statics.getAudit = (isAdmin, auditId, userId) => {

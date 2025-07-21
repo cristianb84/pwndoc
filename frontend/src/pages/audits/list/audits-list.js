@@ -26,6 +26,7 @@ export default {
             languages: [],
             // Datatable headers
             dtHeaders: [
+                {name: 'testid', label: $t('Test ID'), field: 'testid', align: 'left', sortable: false},
                 {name: 'name', label: $t('name'), field: 'name', align: 'left', sortable: true},
                 {name: 'auditType', label: $t('auditType'), field: 'auditType', align: 'left', sortable: true},
                 {name: 'language', label: $t('language'), field: 'language', align: 'left', sortable: true},
@@ -36,7 +37,8 @@ export default {
                 {name: 'reviews', label: '', align: 'left', sortable: false},
                 {name: 'action', label: '', field: 'action', align: 'left', sortable: false},
             ],
-            visibleColumns: ['name', 'auditType', 'language', 'company', 'users', 'date', 'action'],
+//            visibleColumns: ['name', 'auditType', 'language', 'company', 'users', 'date', 'action'],
+            visibleColumns: ['testid', 'name', 'language', 'company', 'users', 'date', 'action'],
             // Datatable pagination
             pagination: {
                 page: 1,
@@ -51,7 +53,8 @@ export default {
                 {label:'All', value:0}
             ],
             // Search filter
-            search: {finding: '', auditType: '', name: '', language: '', company: '', users: '', date: ''},
+//            search: {finding: '', auditType: '', name: '', language: '', company: '', users: '', date: ''},
+            search: {finding: '', testid: '', name: '', language: '', company: '', users: '', date: ''},
             myAudits: false,
             displayConnected: false,
             displayReadyForReview: false,
@@ -286,6 +289,7 @@ export default {
         customFilter: function(rows, terms, cols, getCellValue) {
             var username = this.UserService.user.username.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
 
+	    var testidTerm = (terms.testid || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");  // Add this line
             var nameTerm = (terms.name || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
             var auditTypeTerm = (terms.auditType || "").toLowerCase()
             var languageTerm = (terms.language)? terms.language.toLowerCase(): ""
@@ -294,6 +298,7 @@ export default {
             var dateTerm = (terms.date)? terms.date.toLowerCase(): ""
 
             return rows && rows.filter(row => {
+		var testid = (row.testid || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");  // Add this line
                 var name = (row.name || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
                 var auditType = (row.auditType || "").toLowerCase()
                 var language = (row.language)? row.language.toLowerCase(): ""
@@ -301,7 +306,8 @@ export default {
                 var users = this.convertParticipants(row).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
                 var date = (row.createdAt)? row.createdAt.split('T')[0]: "";
 
-                return name.indexOf(nameTerm) > -1 &&
+                return testid.indexOf(testidTerm) > -1 &&  // Add this line
+		    name.indexOf(nameTerm) > -1 &&
                     (!auditTypeTerm || auditTypeTerm === auditType) &&
                     language.indexOf(languageTerm) > -1 &&
                     (!companyTerm || companyTerm === companyName) &&
