@@ -1,54 +1,59 @@
 version: '3'
+
 services:
   mongodb:
     image: mongo:4.2.15
-    container_name: mongo-pwndoc
-    command: --wiredTigerCacheSizeGB 1 # 50% of (max RAM - 1GB) - minimum 0.25 (Modify it depending on defined RAM limits)
-    deploy:
-      resources:
-        limits:
-          memory: 3G # Maximum memory to allocate (Modify it depending on host ressources - leave at least 1GB free for host)
-        reservations:
-          memory: 1G # Minimum memory required
-    volumes:
-      - ./backend/mongo-data:/data/db
+    container_name: mongo-pwndoc-ng
     restart: always
-    environment:
-      - MONGO_DB:pwndoc
+    ports:
+      - "127.0.0.1:27017:27017"
+    volumes:
+      - mongo-data:/data/db
     networks:
-      - backend
+      - shared_backend
+    # No host port needed; containers talk over the Docker network
+    # If you want local admin access: 127.0.0.1:27017:27017
 
   pwndoc-backend:
-    image: ghcr.io/pwndoc/pwndoc-backend:latest
+    build: ./backend
+    image: pwndoc/pwndoc-backend:Intrum
     container_name: pwndoc-backend
+    restart: always
     environment:
-      - DB_SERVER=mongo-pwndoc
+      - DB_SERVER=mongo-pwndoc-ng
       - DB_NAME=pwndoc
+      - MONGO_URI=mongodb://mongo-pwndoc-ng:27017/pwndoc
     volumes:
       - ./backend/report-templates:/app/report-templates
       - ./backend/src/config:/app/src/config
       - ./backend/src/lib/custom:/app/src/lib/custom
       - ./backend/backup:/app/backup
+    networks:
+      - shared_backend
     depends_on:
       - mongodb
-    restart: always
-    links:
-      - mongodb
-    networks: 
-      - backend
 
   pwndoc-frontend:
-    image: ghcr.io/pwndoc/pwndoc-frontend:latest
+    build: ./frontend
+    image: pwndoc/pwndoc-frontend:Intrum
     container_name: pwndoc-frontend
     restart: always
     ports:
-      - ${APP_PORT}:8443
+      - 443:8443
     networks:
-      - backend
+      - shared_backend
+    healthcheck:
+      test: ["CMD", "curl", "-kfsS", "https://localhost:8443/"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+
+networks:
+  shared_backend:
+    external: true
+    name: pwndoc-ng_backend
 
 volumes:
   mongo-data:
-
-networks:
-  backend:
-      driver: bridge
+    external: true
+    name: pwndoc-ng_mongo-data

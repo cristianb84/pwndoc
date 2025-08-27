@@ -684,8 +684,10 @@ async function prepAuditData(data, settings) {
 
             tmpFinding.cvss4 = {
                 vectorString: tmpCVSS.vectorString || "",
-                baseScore: tmpCVSS.baseScore || "",
-                baseSeverity: tmpCVSS.baseSeverity || "",
+		baseScore: (tmpCVSS.baseScore !== undefined && tmpCVSS.baseScore !== null) ? tmpCVSS.baseScore.toFixed(1) : "0.0",
+		baseSeverity: tmpCVSS.baseSeverity || "None",
+//                baseScore: tmpCVSS.baseScore || "",
+//                baseSeverity: tmpCVSS.baseSeverity || "",
             }
 
             if (tmpCVSS.baseSeverity === "Low") tmpFinding.cvss4.cellColor = cellLowColor
@@ -718,18 +720,43 @@ async function prepAuditData(data, settings) {
         result.findings.push(tmpFinding)
     }
 //Code Added
+//result.findings.sort(function(a, b){
+//return b.cvss.baseMetricScore - a.cvss.baseMetricScore;
+//});
 result.findings.sort(function(a, b){
-return b.cvss.baseMetricScore - a.cvss.baseMetricScore;
+    var scoreA = 0;
+    var scoreB = 0;
+    
+    // Get score based on enabled scoring method
+    if (settings.report.public.scoringMethods.CVSS4 && a.cvss4) {
+        scoreA = parseFloat(a.cvss4.baseScore) || 0;
+    } else if (settings.report.public.scoringMethods.CVSS3 && a.cvss) {
+        scoreA = parseFloat(a.cvss.baseMetricScore) || 0;
+    }
+    
+    if (settings.report.public.scoringMethods.CVSS4 && b.cvss4) {
+        scoreB = parseFloat(b.cvss4.baseScore) || 0;
+    } else if (settings.report.public.scoringMethods.CVSS3 && b.cvss) {
+        scoreB = parseFloat(b.cvss.baseMetricScore) || 0;
+    }
+    
+    return scoreB - scoreA; // Sort descending (highest first)
 });
 let iii = 1;
 for (finding of result.findings){
-        if (finding.category != "Past_Vulns"){
+//        if (finding.category != "Past_Vulns"){
+	if (finding.status != "Fixed" && finding.status != "Not Checked"){
                 finding['no'] = iii++;
 //                console.log(finding);
         }else{
         finding['no'] ="";
         } 
 }
+// Create filtered array for template
+result.activeFindings = result.findings.filter(finding => 
+    finding.status !== "Fixed" && 
+    finding.status !== "Not Checked"
+);
 //
     result.categories = _
         .chain(result.findings)

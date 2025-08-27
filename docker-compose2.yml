@@ -1,0 +1,32 @@
+version: '3'
+services:
+  pwndoc-backend:
+    build: ./backend
+    image: pwndoc/pwndoc-backend:Intrum
+    container_name: pwndoc-backend
+    environment:
+      - DB_SERVER=mongo-pwndoc-ng  # must match the running container name from pwndoc-ng
+      - DB_NAME=pwndoc
+    volumes:
+      - ./backend/report-templates:/app/report-templates
+      - ./backend/src/config:/app/src/config
+      - ./backend/src/lib/custom:/app/src/lib/custom
+      - ./backend/backup:/app/backup
+    networks:
+      - shared_backend
+
+  pwndoc-frontend:
+    build: ./frontend
+    image: pwndoc/pwndoc-frontend:Intrum
+    container_name: pwndoc-frontend
+    restart: always
+    ports:
+      - 8444:8443  # No conflict with pwndoc-ng's port 443
+    networks:
+      - shared_backend
+
+networks:
+  shared_backend:
+    external: true
+    name: pwndoc-ng_backend  # exactly matches the one shown by `docker network ls`
+
