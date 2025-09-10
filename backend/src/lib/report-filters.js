@@ -15,6 +15,27 @@ let subTemplatingFilters = {} // Used for sub-templating in UI
 // Identifiers are sanitized as follow:
 // - Invalid characters replaced by underscores.
 // - Identifiers longer than 40 chars are truncated (MS-Word limitation).
+
+//Added feature to support multiple CWEIDs
+defaultFilters.splitCwe = function(input) {
+    const ids = String(input || '')
+        .split(',')                 // split on commas
+        .map(s => s.trim())         // trim spaces
+        .filter(Boolean)            // drop empties
+        .map(s => s.replace(/[^\d]/g, '')) // keep only digits (handles "CWE-20")
+        .filter(Boolean);
+
+    // (optional) dedupe while preserving order:
+    const seen = new Set();
+    const unique = ids.filter(id => (seen.has(id) ? false : (seen.add(id), true)));
+
+    return unique.map(id => ({
+        id,
+        label: `CWE-${id}`,
+        url: `https://cwe.mitre.org/data/definitions/${id}.html`,
+    }));
+};
+
 defaultFilters.bookmarkCreate = function(input, refid = null) {
     let rand_id = Math.floor(Math.random() * 1000000 + 1000);
     let parsed_id = (refid ? refid : input).replace(/[^a-zA-Z0-9_]/g, '_').substring(0,40);
